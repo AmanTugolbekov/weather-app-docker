@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Текущая погода и прогноз на 5 дней для любого города" />
+    <meta name="theme-color" content="#101a34" />
+    <title>Погода — сейчас и на 5 дней</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <main class="app">
+      <header class="header">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">☀</span>
+          <div>
+            <h1>Погода</h1>
+            <p>Сейчас и прогноз на 5 дней</p>
+          </div>
+        </div>
+      </header>
+
+      <form id="search-form" class="search" role="search">
+        <label class="sr-only" for="city">Название города</label>
+        <input
+          id="city"
+          name="city"
+          type="search"
+          placeholder="Например: Москва"
+          autocomplete="off"
+          maxlength="100"
+          required
+        />
+        <button id="search-button" type="submit">Найти</button>
+      </form>
+
+      <div class="chips" aria-label="Популярные города">
+        <span>Быстрый выбор:</span>
+        <button type="button" data-city="Москва">Москва</button>
+        <button type="button" data-city="Санкт-Петербург">Санкт-Петербург</button>
+        <button type="button" data-city="Лондон">Лондон</button>
+        <button type="button" data-city="Токио">Токио</button>
+      </div>
+
+      <p id="error" class="notice notice-error" role="alert" hidden></p>
+
+      <div id="loading" class="notice notice-loading" hidden>
+        <span class="spinner" aria-hidden="true"></span>
+        Ищем погоду…
+      </div>
+
+      <section id="empty" class="empty">
+        <div class="empty-icon" aria-hidden="true">🌤️</div>
+        <h2>Узнайте, какая погода</h2>
+        <p>Введите город выше или выберите один из быстрых вариантов.</p>
+      </section>
+
+      <section id="weather" class="weather" hidden>
+        <article class="card current-card">
+          <div class="unit-switch" role="group" aria-label="Единицы измерения температуры">
+            <button type="button" data-unit="C" aria-pressed="true">°C</button>
+            <button type="button" data-unit="F" aria-pressed="false">°F</button>
+          </div>
+
+          <div class="current-main">
+            <div id="current-icon" class="current-icon" aria-hidden="true">☀️</div>
+            <div class="current-temp-block">
+              <div id="current-temp" class="current-temp">—</div>
+              <div id="current-desc" class="current-desc">—</div>
+            </div>
+          </div>
+
+          <div class="place">
+            <h2 id="city-name">—</h2>
+            <p id="city-country">—</p>
+          </div>
+
+          <div class="details">
+            <div class="detail">
+              <span class="detail-label">Ощущается как</span>
+              <strong id="feels-like">—</strong>
+            </div>
+            <div class="detail">
+              <span class="detail-label">Влажность</span>
+              <strong id="humidity">—</strong>
+            </div>
+            <div class="detail">
+              <span class="detail-label">Ветер</span>
+              <strong id="wind">—</strong>
+            </div>
+          </div>
+
+          <p id="updated" class="updated"></p>
+        </article>
+
+        <article class="card forecast-card">
+          <h2>Прогноз на 5 дней</h2>
+          <div id="forecast-list" class="forecast-grid"></div>
+        </article>
+      </section>
+
+      <footer class="footer">
+        Данные погоды: <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Open-Meteo</a>
+      </footer>
+    </main>
+  </body>
+</html>
