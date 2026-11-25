@@ -1,92 +1,88 @@
 <!doctype html>
-<html lang="ru">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Текущая погода и прогноз на 5 дней для любого города" />
-    <meta name="theme-color" content="#101a34" />
-    <title>Погода — сейчас и на 5 дней</title>
+    <meta name="description" content="Current conditions and a five-day outlook, in one quiet view." />
+    <meta name="theme-color" content="#e8f0f7" />
+    <title>Look up. — Weather</title>
+
+    <link rel="preload" href="/assets/fonts/sora-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/assets/fonts/plus-jakarta-sans-latin.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="/styles.css" />
     <script src="/app.js" defer></script>
   </head>
   <body>
-    <main class="app">
-      <header class="header">
-        <div class="brand">
-          <span class="brand-mark" aria-hidden="true">☀</span>
-          <div>
-            <h1>Погода</h1>
-            <p>Сейчас и прогноз на 5 дней</p>
-          </div>
-        </div>
-      </header>
+    <main class="stage">
+      <p class="eyebrow">Weather</p>
+      <h1>Look up.</h1>
 
-      <form id="search-form" class="search" role="search">
-        <label class="sr-only" for="city">Название города</label>
+      <form id="search-form" class="glass search" role="search">
+        <label class="sr-only" for="city">City</label>
         <input
           id="city"
           name="city"
           type="search"
-          placeholder="Например: Москва"
+          placeholder="City"
           autocomplete="off"
           maxlength="100"
           required
         />
-        <button id="search-button" type="submit">Найти</button>
+        <button id="search-button" type="submit">Search</button>
       </form>
 
-      <div class="chips" aria-label="Популярные города">
-        <span>Быстрый выбор:</span>
-        <button type="button" data-city="Москва">Москва</button>
-        <button type="button" data-city="Санкт-Петербург">Санкт-Петербург</button>
-        <button type="button" data-city="Лондон">Лондон</button>
-        <button type="button" data-city="Токио">Токио</button>
+      <div class="quick" aria-label="Suggested cities">
+        <button type="button" data-city="London">London</button>
+        <button type="button" data-city="New York">New York</button>
+        <button type="button" data-city="Tokyo">Tokyo</button>
+        <button type="button" data-city="Moscow">Moscow</button>
       </div>
 
-      <p id="error" class="notice notice-error" role="alert" hidden></p>
+      <p id="error" class="notice" role="alert" hidden><span>Error</span><b id="error-text"></b></p>
 
-      <div id="loading" class="notice notice-loading" hidden>
+      <div id="loading" class="loading" hidden>
         <span class="spinner" aria-hidden="true"></span>
-        Ищем погоду…
+        Fetching weather…
       </div>
 
-      <section id="empty" class="empty">
-        <div class="empty-icon" aria-hidden="true">🌤️</div>
-        <h2>Узнайте, какая погода</h2>
-        <p>Введите город выше или выберите один из быстрых вариантов.</p>
+      <section id="empty" class="glass panel empty">
+        <p class="empty-title">A quieter way to check the sky.</p>
+        <p class="empty-copy">Search for a city, or choose one above to see current conditions and the next five days.</p>
       </section>
 
-      <section id="weather" class="weather" hidden>
-        <article class="card current-card">
-          <div class="unit-switch" role="group" aria-label="Единицы измерения температуры">
+      <section id="weather" hidden>
+        <article class="glass panel current-panel">
+          <div class="unit-switch" role="group" aria-label="Temperature unit">
             <button type="button" data-unit="C" aria-pressed="true">°C</button>
             <button type="button" data-unit="F" aria-pressed="false">°F</button>
           </div>
 
-          <div class="current-main">
-            <div id="current-icon" class="current-icon" aria-hidden="true">☀️</div>
-            <div class="current-temp-block">
+          <div class="current">
+            <div id="current-icon" class="current-icon" aria-hidden="true"></div>
+            <div class="current-copy">
               <div id="current-temp" class="current-temp">—</div>
-              <div id="current-desc" class="current-desc">—</div>
+              <p id="current-desc" class="current-desc"></p>
             </div>
           </div>
 
           <div class="place">
-            <h2 id="city-name">—</h2>
-            <p id="city-country">—</p>
+            <h2 id="city-name"></h2>
+            <p id="city-region"></p>
           </div>
 
-          <div class="details">
-            <div class="detail">
-              <span class="detail-label">Ощущается как</span>
+          <div class="divider"></div>
+
+          <div class="metrics">
+            <div class="metric">
+              <span>Feels like</span>
               <strong id="feels-like">—</strong>
             </div>
-            <div class="detail">
-              <span class="detail-label">Влажность</span>
+            <div class="metric">
+              <span>Humidity</span>
               <strong id="humidity">—</strong>
             </div>
-            <div class="detail">
-              <span class="detail-label">Ветер</span>
+            <div class="metric">
+              <span>Wind</span>
               <strong id="wind">—</strong>
             </div>
           </div>
@@ -94,14 +90,17 @@
           <p id="updated" class="updated"></p>
         </article>
 
-        <article class="card forecast-card">
-          <h2>Прогноз на 5 дней</h2>
-          <div id="forecast-list" class="forecast-grid"></div>
-        </article>
+        <div class="section-head">
+          <h2>Next 5 days</h2>
+          <span>Local time</span>
+        </div>
+
+        <section id="forecast-list" class="glass week" aria-label="Five-day outlook"></section>
       </section>
 
       <footer class="footer">
-        Данные погоды: <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Open-Meteo</a>
+        <span>Data: <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Open-Meteo</a></span>
+        <span>Photo: <a href="https://commons.wikimedia.org/wiki/File:Cirrus_uncinus_clouds_in_the_morning_sky.jpg" target="_blank" rel="noreferrer">ADARSHluck / Wikimedia Commons</a>, CC BY-SA 4.0</span>
       </footer>
     </main>
   </body>

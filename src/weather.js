@@ -15,35 +15,36 @@ class WeatherError extends Error {
 }
 
 // WMO weather interpretation codes used by Open-Meteo.
+// `icon` is a semantic key; the client renders it as a monochrome SVG glyph.
 const WEATHER_CODES = new Map([
-  [0, { label: 'Ясно', icon: '☀️', nightIcon: '🌙' }],
-  [1, { label: 'Преимущественно ясно', icon: '🌤️', nightIcon: '🌙' }],
-  [2, { label: 'Переменная облачность', icon: '⛅', nightIcon: '☁️' }],
-  [3, { label: 'Пасмурно', icon: '☁️' }],
-  [45, { label: 'Туман', icon: '🌫️' }],
-  [48, { label: 'Изморозь', icon: '🌫️' }],
-  [51, { label: 'Лёгкая морось', icon: '🌦️' }],
-  [53, { label: 'Морось', icon: '🌦️' }],
-  [55, { label: 'Сильная морось', icon: '🌧️' }],
-  [56, { label: 'Лёгкая ледяная морось', icon: '🌧️' }],
-  [57, { label: 'Сильная ледяная морось', icon: '🌧️' }],
-  [61, { label: 'Небольшой дождь', icon: '🌦️' }],
-  [63, { label: 'Дождь', icon: '🌧️' }],
-  [65, { label: 'Сильный дождь', icon: '🌧️' }],
-  [66, { label: 'Ледяной дождь', icon: '🌧️' }],
-  [67, { label: 'Сильный ледяной дождь', icon: '🌧️' }],
-  [71, { label: 'Небольшой снег', icon: '🌨️' }],
-  [73, { label: 'Снег', icon: '❄️' }],
-  [75, { label: 'Сильный снег', icon: '❄️' }],
-  [77, { label: 'Снежные зёрна', icon: '🌨️' }],
-  [80, { label: 'Небольшой ливень', icon: '🌦️' }],
-  [81, { label: 'Ливень', icon: '🌧️' }],
-  [82, { label: 'Сильный ливень', icon: '🌧️' }],
-  [85, { label: 'Небольшой снегопад', icon: '🌨️' }],
-  [86, { label: 'Сильный снегопад', icon: '❄️' }],
-  [95, { label: 'Гроза', icon: '⛈️' }],
-  [96, { label: 'Гроза с градом', icon: '⛈️' }],
-  [99, { label: 'Сильная гроза с градом', icon: '⛈️' }],
+  [0, { label: 'Clear', icon: 'clear', nightIcon: 'clear-night' }],
+  [1, { label: 'Mostly clear', icon: 'mostly-clear', nightIcon: 'clear-night' }],
+  [2, { label: 'Partly cloudy', icon: 'partly-cloudy', nightIcon: 'partly-cloudy-night' }],
+  [3, { label: 'Overcast', icon: 'cloudy' }],
+  [45, { label: 'Fog', icon: 'fog' }],
+  [48, { label: 'Rime fog', icon: 'fog' }],
+  [51, { label: 'Light drizzle', icon: 'drizzle' }],
+  [53, { label: 'Drizzle', icon: 'drizzle' }],
+  [55, { label: 'Heavy drizzle', icon: 'drizzle' }],
+  [56, { label: 'Light freezing drizzle', icon: 'drizzle' }],
+  [57, { label: 'Heavy freezing drizzle', icon: 'drizzle' }],
+  [61, { label: 'Light rain', icon: 'rain' }],
+  [63, { label: 'Rain', icon: 'rain' }],
+  [65, { label: 'Heavy rain', icon: 'rain' }],
+  [66, { label: 'Freezing rain', icon: 'rain' }],
+  [67, { label: 'Heavy freezing rain', icon: 'rain' }],
+  [71, { label: 'Light snow', icon: 'snow' }],
+  [73, { label: 'Snow', icon: 'snow' }],
+  [75, { label: 'Heavy snow', icon: 'snow' }],
+  [77, { label: 'Snow grains', icon: 'snow' }],
+  [80, { label: 'Light showers', icon: 'rain' }],
+  [81, { label: 'Showers', icon: 'rain' }],
+  [82, { label: 'Heavy showers', icon: 'rain' }],
+  [85, { label: 'Light snow showers', icon: 'snow' }],
+  [86, { label: 'Heavy snow showers', icon: 'snow' }],
+  [95, { label: 'Thunderstorm', icon: 'thunder' }],
+  [96, { label: 'Thunderstorm with hail', icon: 'thunder' }],
+  [99, { label: 'Severe thunderstorm with hail', icon: 'thunder' }],
 ]);
 
 function normalizeCity(value) {
@@ -52,7 +53,7 @@ function normalizeCity(value) {
 }
 
 function weatherInfo(code, isDay = true) {
-  const info = WEATHER_CODES.get(Number(code)) || { label: 'Неизвестные условия', icon: '🌡️' };
+  const info = WEATHER_CODES.get(Number(code)) || { label: 'Unknown conditions', icon: 'unknown' };
   return {
     description: info.label,
     icon: isDay ? info.icon : (info.nightIcon || info.icon),
@@ -88,17 +89,17 @@ function createWeatherService({
         signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
       });
     } catch {
-      throw new WeatherError(`Не удалось получить ${purpose}: сервис погоды недоступен`, 502);
+      throw new WeatherError(`Could not retrieve ${purpose}: weather service unavailable`, 502);
     }
 
     if (!response.ok) {
-      throw new WeatherError(`Сервис погоды вернул ошибку при запросе ${purpose}`, 502);
+      throw new WeatherError(`Weather service returned an error while fetching ${purpose}`, 502);
     }
 
     try {
       return await response.json();
     } catch {
-      throw new WeatherError(`Сервис погоды вернул некорректный ответ для ${purpose}`, 502);
+      throw new WeatherError(`Weather service returned an invalid response for ${purpose}`, 502);
     }
   }
 
@@ -106,13 +107,13 @@ function createWeatherService({
     const params = new URLSearchParams({
       name: city,
       count: '1',
-      language: 'ru',
+      language: 'en',
       format: 'json',
     });
-    const data = await requestJson(`${GEOCODING_URL}?${params}`, 'список городов');
+    const data = await requestJson(`${GEOCODING_URL}?${params}`, 'cities');
     const match = data && Array.isArray(data.results) ? data.results[0] : null;
     if (!match || !Number.isFinite(match.latitude) || !Number.isFinite(match.longitude)) {
-      throw new WeatherError(`Город «${city}» не найден`, 404);
+      throw new WeatherError(`City "${city}" not found`, 404);
     }
     return match;
   }
@@ -120,7 +121,8 @@ function createWeatherService({
   function buildResponse(match, data) {
     const current = data.current || {};
     const daily = data.daily || {};
-    const currentInfo = weatherInfo(current.weather_code, current.is_day !== 0);
+    const isDay = current.is_day !== 0;
+    const currentInfo = weatherInfo(current.weather_code, isDay);
 
     return {
       city: {
@@ -137,6 +139,7 @@ function createWeatherService({
         humidity: current.relative_humidity_2m ?? null,
         windSpeed: current.wind_speed_10m ?? null,
         code: current.weather_code ?? null,
+        isDay,
         description: currentInfo.description,
         icon: currentInfo.icon,
       },
@@ -175,7 +178,7 @@ function createWeatherService({
       timezone: 'auto',
       forecast_days: '5',
     });
-    const data = await requestJson(`${FORECAST_URL}?${params}`, 'прогноз');
+    const data = await requestJson(`${FORECAST_URL}?${params}`, 'the forecast');
     return buildResponse(match, data);
   }
 
@@ -190,10 +193,10 @@ function createWeatherService({
   async function getWeather(query, { mode = 'full' } = {}) {
     const city = normalizeCity(query);
     if (!city) {
-      throw new WeatherError('Укажите название города, например: Москва', 400);
+      throw new WeatherError('Enter a city name, for example: London', 400);
     }
 
-    const key = city.toLocaleLowerCase('ru');
+    const key = city.toLocaleLowerCase('en');
     const cached = cache.get(key);
     if (cached && cached.expires > now()) {
       return pick({ ...cached.value, cached: true }, mode);

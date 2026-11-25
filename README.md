@@ -1,9 +1,10 @@
 # Weather App + Docker
 
-Небольшое приложение для погоды: поиск города, текущая погода и прогноз на 5 дней.
-Данные берутся из [Open-Meteo](https://open-meteo.com/) — API-ключ не нужен.
+A minimal weather app: search a city, see current conditions and a five-day outlook.
+Weather data comes from [Open-Meteo](https://open-meteo.com/) — no API key required.
+The interface and all API messages are in English.
 
-## Структура
+## Structure
 
 ```
 .
@@ -11,85 +12,87 @@
 ├── docker-compose.yml
 ├── package.json
 ├── src/
-│   ├── server.js      # Express: статику и API
-│   └── weather.js     # запросы к Open-Meteo, кэш, обработка ошибок
+│   ├── server.js      # Express: static files and API
+│   └── weather.js     # Open-Meteo requests, cache, error handling
 ├── public/
 │   ├── index.html
 │   ├── app.js
-│   └── styles.css
+│   ├── styles.css
+│   └── assets/        # sky photograph and locally hosted fonts
 └── test/
     └── weather.test.js
 ```
 
-## Запуск через Docker (рекомендуемый способ)
+## Run with Docker (recommended)
 
 ```bash
 docker compose up --build
 ```
 
-Откройте <http://localhost:8080>. Остановка: `docker compose down`.
+Open <http://localhost:8080>. Stop with `docker compose down`.
 
-Хост-порт можно изменить через переменную `APP_PORT`:
+Change the host port with `APP_PORT`:
 
 ```bash
 APP_PORT=9000 docker compose up --build
 ```
 
-В Windows PowerShell:
+In Windows PowerShell:
 
 ```powershell
 $env:APP_PORT = "9000"
 docker compose up --build
 ```
 
-## Локальный запуск без Docker
+## Run locally without Docker
 
-Нужен Node.js 20+.
+Node.js 20 or newer is required.
 
 ```bash
 npm install
 npm start
 ```
 
-Откройте <http://localhost:3000>. Для разработки с автоперезапуском: `npm run dev`.
+Open <http://localhost:3000>. For auto-restart during development: `npm run dev`.
 
-Настройки можно вынести в `.env` (скопируйте `.env.example`) и запускать так:
+To use a `.env` file (copy `.env.example`):
 
 ```bash
 node --env-file=.env src/server.js
 ```
 
-## Переменные окружения
+## Environment variables
 
-| Переменная     | По умолчанию | Назначение                                  |
-| -------------- | ------------ | ------------------------------------------- |
-| `PORT`         | `3000`       | Порт, который слушает приложение            |
-| `APP_PORT`     | `8080`       | Порт на хосте в `docker-compose.yml`        |
-| `CACHE_TTL_MS` | `600000`     | Время жизни кэша ответов погоды (10 минут)  |
+| Variable       | Default  | Purpose                                      |
+| -------------- | -------- | -------------------------------------------- |
+| `PORT`         | `3000`   | Port the app listens on inside the container |
+| `APP_PORT`     | `8080`   | Host port in `docker-compose.yml`            |
+| `CACHE_TTL_MS` | `600000` | Weather cache lifetime (10 minutes)          |
 
 ## API
 
-- `GET /api/health` — состояние сервиса.
-- `GET /api/weather?city=Москва` — город, текущая погода и прогноз, единицы измерения.
-- `GET /api/forecast?city=Москва` — только город и прогноз на 5 дней.
+- `GET /api/health` — service status.
+- `GET /api/weather?city=London` — city, current conditions, five-day outlook, units.
+- `GET /api/forecast?city=London` — city and five-day outlook only.
 
-Пример ответа `/api/weather`:
+Example `/api/weather` response:
 
 ```json
 {
-  "city": { "name": "Москва", "country": "Россия", "region": "Москва", "latitude": 55.75, "longitude": 37.62 },
+  "city": { "name": "London", "country": "United Kingdom", "region": "England", "latitude": 51.50853, "longitude": -0.12574 },
   "current": {
     "time": "2026-11-25T12:00",
-    "temperature": 3.4,
-    "feelsLike": 1.2,
-    "humidity": 78,
-    "windSpeed": 12.3,
-    "code": 61,
-    "description": "Небольшой дождь",
-    "icon": "🌦️"
+    "temperature": 6.2,
+    "feelsLike": 4.1,
+    "humidity": 81,
+    "windSpeed": 11.4,
+    "code": 3,
+    "isDay": true,
+    "description": "Overcast",
+    "icon": "cloudy"
   },
   "forecast": [
-    { "date": "2026-11-25", "description": "Небольшой дождь", "icon": "🌦️", "max": 4, "min": -1 }
+    { "date": "2026-11-25", "description": "Overcast", "icon": "cloudy", "max": 6.2, "min": 3.7 }
   ],
   "units": { "temperature": "°C", "windSpeed": "km/h" },
   "fetchedAt": "2026-11-25T12:00:00.000Z",
@@ -97,23 +100,39 @@ node --env-file=.env src/server.js
 }
 ```
 
-Ошибки возвращаются в формате `{"error": "..."}` с подходящим HTTP-кодом:
-400 — не указан город, 404 — город не найден, 502 — внешний сервис недоступен.
+`icon` is a semantic key (`clear`, `clear-night`, `partly-cloudy`, `cloudy`, `fog`,
+`drizzle`, `rain`, `snow`, `thunder`, `unknown`) rendered by the client as a
+monochrome SVG glyph — no emoji in the UI or the API.
 
-Кэш in-memory, один ответ на город хранится `CACHE_TTL_MS` миллисекунд; конкурентные запросы
-к одному городу объединяются в один запрос к API.
+Errors return `{"error": "..."}` with a matching HTTP status:
+400 — no city given, 404 — city not found, 502 — upstream service unavailable.
 
-## Тесты
+The cache is in-memory: one response per city is kept for `CACHE_TTL_MS`
+milliseconds, and concurrent requests for the same city are coalesced into a
+single upstream call.
+
+## Tests
 
 ```bash
 npm test
 ```
 
-Тесты проверяют нормализацию ввода, сопоставление кодов погоды, форму ответа, кэш и обработку
-ошибок — без обращения к сети.
+Tests cover input normalization, WMO code mapping, response shape, cache behavior
+and error handling — without network access.
 
-## Возможные проблемы
+## Design and assets
 
-- Если погода не загружается, проверьте доступ к `open-meteo.com` и ответ `/api/health`.
-- Порт 8080 занят — задайте другой `APP_PORT`.
-- Контейнер собирается из `node:20-alpine` и запускается от непривилегированного пользователя.
+- **Type:** Sora for display, Plus Jakarta Sans for body text. Both are hosted
+  locally in `public/assets/fonts/` under the SIL Open Font License.
+- **Photo:** `Cirrus uncinus clouds in the morning sky` by ADARSHluck, via
+  [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Cirrus_uncinus_clouds_in_the_morning_sky.jpg),
+  licensed [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
+  Credit is also shown in the app footer.
+- **Material:** translucent white glass panels over the photograph, with a
+  hairline border and a subtle inner highlight. No emoji and no decorative gradients.
+
+## Troubleshooting
+
+- If weather does not load, check access to `open-meteo.com` and `/api/health`.
+- If port 8080 is taken, set a different `APP_PORT`.
+- The image is built on `node:20-alpine` and runs as an unprivileged user.
